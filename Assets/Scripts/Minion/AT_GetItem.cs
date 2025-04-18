@@ -1,27 +1,19 @@
 using NodeCanvas.Framework;
-using ParadoxNotion.Design;
 using UnityEngine;
 using UnityEngine.AI;
 
-
 namespace NodeCanvas.Tasks.Actions {
 
-	public class Lunge : ActionTask {
+	public class AT_GetItem : ActionTask {
 
-		public BBParameter<Transform> playerBB;
-		Transform player;
-		public float speed = 20;
-		public float lungeTime = 3;
-		float timer;
-		public float distance = 10;
-		Vector3 destination;
-		NavMeshAgent nav;
+		public float acceptRadius = 3f;	//how far away the minion has to be to pick it up
+		public BBParameter<Transform> itemRef;	//reference to the item
+		NavMeshAgent nav;	//reference to the nav agent
 
 		//Use for initialization. This is called only once in the lifetime of the task.
 		//Return null if init was successfull. Return an error string otherwise
 		protected override string OnInit() {
-			nav = agent.GetComponent<NavMeshAgent>();
-			player = playerBB.value;
+			nav = agent.GetComponent<NavMeshAgent>();	//get reference to nav agent
 			return null;
 		}
 
@@ -29,16 +21,17 @@ namespace NodeCanvas.Tasks.Actions {
 		//Call EndAction() to mark the action as finished, either in success or failure.
 		//EndAction can be called from anywhere.
 		protected override void OnExecute() {
-			destination = (player.position - agent.transform.position).normalized * distance + agent.transform.position;
-			nav.SetDestination(destination);
-			nav.speed = speed;
-			timer = lungeTime;
+			nav.SetDestination(itemRef.value.position);	//set destination to item
 		}
 
 		//Called once per frame while the action is active.
 		protected override void OnUpdate() {
-			timer -= Time.deltaTime;
-			if(timer <= 0) {
+			//if the item stops existing, return false
+			if(itemRef.value == null){
+				EndAction(false);
+			}
+			//if the item is close enough, return true
+			if((agent.transform.position - itemRef.value.position).magnitude <= acceptRadius){
 				EndAction(true);
 			}
 		}
